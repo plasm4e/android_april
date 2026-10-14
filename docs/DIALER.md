@@ -17,7 +17,21 @@ is small enough to audit. Android lets any app become the default phone app
 
 ## Steps (each pushed when done)
 - [x] 1. Module skeleton + Nicknames generator + unit tests
-- [x] 2. (compiles, not yet tested on emulator) InCallService + in-call/incoming screen (answer/decline/hang up/reveal)
+- [x] 2. InCallService + in-call/incoming screen (answer/decline/hang up/reveal)
 - [x] 3. (compiles, not yet tested on emulator) Default-dialer role request + dial pad (ACTION_DIAL / tel: handling)
 - [x] 4. (compiles, not yet tested on emulator) Recents list from CallLog
-- [ ] 5. Test on emulator (`adb emu gsm call <number>` simulates an incoming call)
+- [~] 5. Test on emulator (`adb emu gsm call <number>` simulates an incoming call)
+
+## Emulator test results (2026-10-14)
+- ✅ `cmd role add-role-holder android.app.role.DIALER org.privacyrom.dialer 0` makes it the default.
+- ✅ `adb emu gsm call 3331234567`: call screen shows only "Incoming call" + Answer/Decline/Reveal;
+  heads-up notification says only "Incoming call".
+- ✅ After Answer: shows nickname "Calm Falcon 15" and timer; Hang up works.
+- ⬜ Not yet tested: Reveal, Decline, mute/speaker, dial pad + outgoing call, Recents list.
+
+## Next steps
+1. Bug: the heads-up notification still says "Incoming call" after answering. Re-post it on
+   state change ("Call", no full-screen intent, `setOnlyAlertOnce`), or cancel the heads-up.
+2. Test the remaining items above.
+3. Optional "Reveal" protection with fingerprint/PIN (BiometricPrompt).
+4. Contacts: show contact name only after Reveal (needs READ_CONTACTS).
