@@ -16,7 +16,7 @@ is small enough to audit. Android lets any app become the default phone app
 5. **Dial pad**: digits typed are masked after a moment (like a password field).
 
 ## Steps (each pushed when done)
-- [ ] 1. Module skeleton + Nicknames generator + unit tests
+- [x] 1. Module skeleton + Nicknames generator + unit tests
 - [ ] 2. InCallService + in-call/incoming screen (answer/decline/hang up/reveal)
 - [ ] 3. Default-dialer role request + dial pad (ACTION_DIAL / tel: handling)
 - [ ] 4. Recents list from CallLog
