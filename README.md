@@ -31,3 +31,8 @@ out of memory and the emulator gets shut down. Order: stop, build, start.
 
 The keyboard sets `FLAG_SECURE`, so screenshots of it come out black. For development
 screenshots build with `./gradlew -PdevScreenshots=true :keyboard:assembleDebug`.
+
+## License
+
+[GPL-3.0](LICENSE). Anyone may use, modify and redistribute this project, as long as
+modified versions they distribute are also released under GPL-3.0 with their source code.
