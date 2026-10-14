@@ -20,18 +20,23 @@ is small enough to audit. Android lets any app become the default phone app
 - [x] 2. InCallService + in-call/incoming screen (answer/decline/hang up/reveal)
 - [x] 3. (compiles, not yet tested on emulator) Default-dialer role request + dial pad (ACTION_DIAL / tel: handling)
 - [x] 4. (compiles, not yet tested on emulator) Recents list from CallLog
-- [~] 5. Test on emulator (`adb emu gsm call <number>` simulates an incoming call)
+- [x] 5. Test on emulator (`adb emu gsm call <number>` simulates an incoming call; `scripts/emu.sh install dialer` installs + makes default)
 
-## Emulator test results (2026-10-14)
-- ✅ `cmd role add-role-holder android.app.role.DIALER org.privacyrom.dialer 0` makes it the default.
-- ✅ `adb emu gsm call 3331234567`: call screen shows only "Incoming call" + Answer/Decline/Reveal;
-  heads-up notification says only "Incoming call".
-- ✅ After Answer: shows nickname "Calm Falcon 15" and timer; Hang up works.
-- ⬜ Not yet tested: Reveal, Decline, mute/speaker, dial pad + outgoing call, Recents list.
+## Emulator test results (2026-10-14), screenshots in docs/screenshots/dialer-*.png
+- ✅ Default dialer via `scripts/emu.sh install dialer`.
+- ✅ Incoming: only "Incoming call"; heads-up says only "Incoming call".
+- ✅ Reveal/Hide shows/hides the number; Answer shows nickname + timer; Decline; Hang up.
+- ✅ After answering, the heads-up is replaced by a quiet low-priority "Call" notification (bug fixed).
+- ✅ Mute. Speaker toggle can't be tested: the emulator is speaker-only.
+- ✅ Dial pad masks digits; outgoing call shows nickname only.
+- ✅ Recents: nickname + direction + time; same number = same nickname.
+
+## Last changes, compiled but NOT yet tested on the emulator
+- Reveal resets for each new call (call screen is reused between calls).
+- Speaker toggle hidden when only one audio route exists.
+- Recents says "just now" instead of "0 minutes ago".
 
 ## Next steps
-1. Bug: the heads-up notification still says "Incoming call" after answering. Re-post it on
-   state change ("Call", no full-screen intent, `setOnlyAlertOnce`), or cancel the heads-up.
-2. Test the remaining items above.
-3. Optional "Reveal" protection with fingerprint/PIN (BiometricPrompt).
-4. Contacts: show contact name only after Reveal (needs READ_CONTACTS).
+1. Test the three changes above.
+2. Optional "Reveal" protection with fingerprint/PIN (BiometricPrompt).
+3. Contacts: show contact name only after Reveal (needs READ_CONTACTS).

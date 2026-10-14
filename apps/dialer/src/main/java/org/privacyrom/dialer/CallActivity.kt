@@ -33,6 +33,8 @@ class CallActivity : Activity() {
     private lateinit var speaker: Button
     private lateinit var reveal: Button
     private var revealed = false
+    // The activity is singleInstance and reused across calls: forget "Reveal" for a new call.
+    private var shownCall: Call? = null
     private val listener: () -> Unit = { handler.post { render() } }
     private val ticker = object : Runnable {
         override fun run() {
@@ -101,6 +103,10 @@ class CallActivity : Activity() {
             finishAndRemoveTask() // never leave a call screen around in recents
             return
         }
+        if (call != shownCall) {
+            shownCall = call
+            revealed = false
+        }
         val state = call.details.state
         val ringing = state == Call.STATE_RINGING
         val active = state == Call.STATE_ACTIVE
@@ -126,6 +132,11 @@ class CallActivity : Activity() {
         mute.text = if (audio?.isMuted == true) "Unmute" else "Mute"
         speaker.text = if (audio?.route == CallAudioState.ROUTE_SPEAKER) "Earpiece" else "Speaker"
         mute.isEnabled = active
+        // Hide the toggle when there is nothing to switch to (e.g. speaker-only devices/emulator).
+        val routes = audio?.supportedRouteMask ?: 0
+        val canSwitch = routes and CallAudioState.ROUTE_SPEAKER != 0 &&
+            routes and CallAudioState.ROUTE_WIRED_OR_EARPIECE != 0
+        speaker.visibility = if (canSwitch) android.view.View.VISIBLE else android.view.View.GONE
         speaker.isEnabled = !ringing
     }
 

@@ -3,7 +3,7 @@
 #   scripts/emu.sh setup    install SDK + Android 15 image (what LineageOS 22 is based on) + AVD
 #   scripts/emu.sh start    boot headless in tmux and wait for boot
 #   scripts/emu.sh stop     shut it down (do this before Gradle builds: both don't fit in RAM)
-#   scripts/emu.sh install  install the keyboard APK and make it the active keyboard
+#   scripts/emu.sh install [keyboard|dialer]  install an app and make it the active keyboard/phone app
 #   scripts/emu.sh shot F   save a screenshot to F
 set -euo pipefail
 
@@ -12,7 +12,6 @@ export JAVA_HOME="${JAVA_HOME_21:-/usr/local/sdkman/candidates/java/21.0.12+1-ms
 ADB="$ANDROID_HOME/platform-tools/adb"
 AVD=privacy35
 IMAGE="system-images;android-35;default;x86_64"
-APK="$(dirname "$0")/../apps/keyboard/build/outputs/apk/debug/keyboard-debug.apk"
 IME=org.privacyrom.keyboard/.PrivacyKeyboardService
 
 case "${1:-}" in
@@ -54,9 +53,20 @@ stop)
   tmux kill-session -t emu 2>/dev/null || true
   ;;
 install)
-  "$ADB" install -r "$APK"
-  "$ADB" shell ime enable $IME
-  "$ADB" shell ime set $IME
+  app="${2:-keyboard}"
+  "$ADB" install -r "$(dirname "$0")/../apps/$app/build/outputs/apk/debug/$app-debug.apk"
+  case "$app" in
+  keyboard)
+    "$ADB" shell ime enable $IME
+    "$ADB" shell ime set $IME
+    ;;
+  dialer)
+    "$ADB" shell cmd role add-role-holder android.app.role.DIALER org.privacyrom.dialer 0
+    for p in CALL_PHONE READ_CALL_LOG POST_NOTIFICATIONS; do
+      "$ADB" shell pm grant org.privacyrom.dialer android.permission.$p
+    done
+    ;;
+  esac
   # The 2-core emulator is slow: skip animations and "app isn't responding" dialogs.
   for k in window_animation_scale transition_animation_scale animator_duration_scale; do
     "$ADB" shell settings put global $k 0

@@ -13,7 +13,11 @@ import android.telecom.InCallService
 class PrivacyInCallService : InCallService() {
 
     private val callback = object : Call.Callback() {
-        override fun onStateChanged(call: Call, state: Int) = CallState.notifyChanged()
+        override fun onStateChanged(call: Call, state: Int) {
+            // Once answered/dialing, swap the "Incoming call" heads-up for a quiet ongoing one.
+            if (state != Call.STATE_RINGING && state != Call.STATE_DISCONNECTED) postNotification(call)
+            CallState.notifyChanged()
+        }
     }
 
     override fun onCallAdded(call: Call) {
@@ -26,7 +30,9 @@ class PrivacyInCallService : InCallService() {
     override fun onCallRemoved(call: Call) {
         call.unregisterCallback(callback)
         if (CallState.call == call) CallState.call = null
-        getSystemService(NotificationManager::class.java).cancel(NOTIFICATION_ID)
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.cancel(INCOMING_ID)
+        nm.cancel(ONGOING_ID)
     }
 
     override fun onCallAudioStateChanged(audioState: CallAudioState?) = CallState.notifyChanged()
@@ -36,36 +42,51 @@ class PrivacyInCallService : InCallService() {
         super.onDestroy()
     }
 
-    /**
-     * Incoming calls need a full-screen notification to show over the lock screen. The
-     * notification itself says only "Call": no name, number or nickname.
-     */
     private fun showCallScreen(call: Call) {
-        val intent = Intent(this, CallActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        postNotification(call)
+        startActivity(callIntent())
+    }
+
+    /**
+     * Ringing calls get a full-screen, high-priority notification (needed to show over the lock
+     * screen); other calls a quiet ongoing one. Neither shows a name, number or nickname.
+     */
+    private fun postNotification(call: Call) {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Calls", NotificationManager.IMPORTANCE_HIGH).apply {
+            NotificationChannel(CHANNEL_INCOMING, "Incoming calls", NotificationManager.IMPORTANCE_HIGH).apply {
                 setSound(null, null) // Telecom plays the ringtone (IN_CALL_SERVICE_RINGING=false)
                 lockscreenVisibility = Notification.VISIBILITY_SECRET
             }
         )
-        val pending = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-        val incoming = call.details.state == Call.STATE_RINGING
-        val notification = Notification.Builder(this, CHANNEL)
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_ONGOING, "Ongoing call", NotificationManager.IMPORTANCE_LOW).apply {
+                lockscreenVisibility = Notification.VISIBILITY_SECRET
+            }
+        )
+        val pending = PendingIntent.getActivity(this, 0, callIntent(), PendingIntent.FLAG_IMMUTABLE)
+        val ringing = call.details.state == Call.STATE_RINGING
+        val builder = Notification.Builder(this, if (ringing) CHANNEL_INCOMING else CHANNEL_ONGOING)
             .setSmallIcon(android.R.drawable.sym_action_call)
-            .setContentTitle(if (incoming) "Incoming call" else "Call")
+            .setContentTitle(if (ringing) "Incoming call" else "Call")
             .setCategory(Notification.CATEGORY_CALL)
             .setVisibility(Notification.VISIBILITY_SECRET)
             .setOngoing(true)
             .setContentIntent(pending)
-            .setFullScreenIntent(pending, true)
-            .build()
-        nm.notify(NOTIFICATION_ID, notification)
-        startActivity(intent)
+        if (ringing) {
+            nm.notify(INCOMING_ID, builder.setFullScreenIntent(pending, true).build())
+        } else {
+            nm.cancel(INCOMING_ID) // removes the heads-up immediately
+            nm.notify(ONGOING_ID, builder.build())
+        }
     }
 
+    private fun callIntent() = Intent(this, CallActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
     private companion object {
-        const val CHANNEL = "calls"
-        const val NOTIFICATION_ID = 1
+        const val CHANNEL_INCOMING = "calls"
+        const val CHANNEL_ONGOING = "ongoing_call"
+        const val INCOMING_ID = 1
+        const val ONGOING_ID = 2
     }
 }

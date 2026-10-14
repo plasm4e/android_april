@@ -67,7 +67,9 @@ class RecentsActivity : Activity() {
                     CallLog.Calls.REJECTED_TYPE, CallLog.Calls.BLOCKED_TYPE -> "⊘ declined"
                     else -> "•"
                 }
-                val time = DateUtils.getRelativeTimeSpanString(c.getLong(2))
+                val date = c.getLong(2)
+                val time = if (System.currentTimeMillis() - date < DateUtils.MINUTE_IN_MILLIS) "just now"
+                else DateUtils.getRelativeTimeSpanString(date)
                 entries += Entry(number, "${nicknames.of(number)}\n$direction · $time")
             }
         }
