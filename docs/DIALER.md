@@ -18,6 +18,6 @@ is small enough to audit. Android lets any app become the default phone app
 ## Steps (each pushed when done)
 - [x] 1. Module skeleton + Nicknames generator + unit tests
 - [x] 2. (compiles, not yet tested on emulator) InCallService + in-call/incoming screen (answer/decline/hang up/reveal)
-- [ ] 3. Default-dialer role request + dial pad (ACTION_DIAL / tel: handling)
-- [ ] 4. Recents list from CallLog
+- [x] 3. (compiles, not yet tested on emulator) Default-dialer role request + dial pad (ACTION_DIAL / tel: handling)
+- [x] 4. (compiles, not yet tested on emulator) Recents list from CallLog
 - [ ] 5. Test on emulator (`adb emu gsm call <number>` simulates an incoming call)
