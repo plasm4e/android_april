@@ -1,7 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- No INTERNET permission: call data never leaves the phone. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.DeviceDefault" />
+        android:theme="@android:style/Theme.DeviceDefault">
+
+        <service
+            android:name=".PrivacyInCallService"
+            android:exported="true"
+            android:permission="android.permission.BIND_INCALL_SERVICE">
+            <!-- We provide the call UI; Telecom keeps playing the ringtone. -->
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="false" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
+
+        <!-- excludeFromRecents: an active or past call never appears in the recents screen. -->
+        <activity
+            android:name=".CallActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:taskAffinity="org.privacyrom.dialer.call" />
+    </application>
 </manifest>
